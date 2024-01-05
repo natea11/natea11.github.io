@@ -1,0 +1,49 @@
+name: Mixed inputs
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_version:
+        description: CAD Classic build version
+        required: true
+      name:
+        type: choice
+        description: Who to greet
+        options: 
+        - monalisa
+        - cschleiden
+      message:
+        required: true
+      use-emoji:
+        type: boolean
+        description: Include 🎉🤣 emojis
+      environment:
+        type: choice
+        description: Environment
+        options:
+          - Development
+          - QA
+          - UAT
+          - Production
+
+jobs:
+  greet:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Send greeting
+      run: |
+        echo "${{ github.event.inputs.message }} ${{ fromJSON('["", "🥳"]')[github.event.inputs.use-emoji == 'true'] }} ${{ github.event.inputs.name }}"
+        echo "environment is ${{ github.event.inputs.environment }} / ${{ inputs.environment }}"
+        echo "CAD version is ${{ github.event.inputs.build_version }}"
+  
+  build:
+    name: Replace JSON
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: Update config.json
+        run: echo "`jq '.cad_classic[0].build_version="${{ github.event.inputs.build_version }}"' config.json`" > config.json
+      - name: Read config.json
+        run: cat config.json 
